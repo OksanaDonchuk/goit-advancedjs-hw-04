@@ -2,111 +2,95 @@ import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
-import PostApiService from './js/get-img';
-import LoadMoreBtn from './js/loader-more';
-import PageLoadStatus from './js/loader';
-import formSticky from './js/sticky';
+import { fetchPost } from './js/get-img';
 
-const refs = {
-  formSearch: document.querySelector('.search-form'),
-  gallery: document.querySelector('.gallery'),
-};
+const RES_PER_PAGE = 40;
 
-const loadMoreBtn = new LoadMoreBtn({
-  selector: '.load-more',
-  hidden: true,
+const formSearch = document.querySelector('.search-form');
+const gallery = document.querySelector('.gallery');
+const divObserver = document.querySelector('.observer');
+const endPage = document.querySelector('.end-page');
+
+const lightbox = new SimpleLightbox('.gallery a');
+const observer = new IntersectionObserver(observerAction, {
+  rootMargin: '1000px',
 });
 
-const pageLoadStatus = new PageLoadStatus({
-  selector: '.page-load-status',
-});
+endPage.classList.add('is-hidden');
 
-const postApiService = new PostApiService();
-const lightbox = new SimpleLightbox('.gallery__item', {
-  captionDelay: 250,
-  captionsData: 'alt',
-  enableKeyboard: true,
-});
-const obsOptions = {
-  root: null,
-  rootMargin: '100px',
-  treshold: 1,
-};
-const observer = new IntersectionObserver(onLoading, obsOptions);
+formSearch.addEventListener('submit', onSubmit);
 
-refs.formSearch.addEventListener('submit', onSearch);
-loadMoreBtn.refs.button.addEventListener('click', onLoadMore);
-window.addEventListener('scroll', formSticky);
+let currentPage;
+let currentQuery;
 
-function onSearch(e) {
-  e.preventDefault();
-  pageLoadStatus.hide();
+function onSubmit(event) {
+  event.preventDefault();
+  const query = event.currentTarget.elements.searchQuery.value.trim();
+  if (!query) {
+    iziToast.show({
+      message: 'Enter the value to search for.',
+      position: 'topRight',
+      color: '#FCE8E6',
+    });
+    return;
+  }
 
-  postApiService.query = e.target.searchQuery.value.trim();
-  loadMoreBtn.show();
-  postApiService.resetPage();
-  clearGallery();
-  fetchPosts();
+  currentPage = 0;
+  currentQuery = query;
+  gallery.innerHTML = '';
+  observer.observe(divObserver);
 }
 
-function onLoadMore() {
-  fetchPosts();
-
-  pageLoadStatus.show();
-  observer.observe(pageLoadStatus.refs.pageLoadStatus);
+async function observerAction(entries) {
+  entries.forEach(async entry => {
+    if (entry.isIntersecting) {
+      currentPage += 1;
+      const newMarkup = await createMarkup(currentQuery, currentPage);
+      if (newMarkup) {
+        gallery.insertAdjacentHTML('beforeend', newMarkup);
+        lightbox.refresh();
+      }
+    }
+  });
 }
 
-function fetchPosts() {
-  loadMoreBtn.hide();
-  pageLoadStatus.loadingShow();
-
-  postApiService.fetchPost().then(data => {
-    const curentPage = postApiService.page - 1;
-    postApiService.hits = data.totalHits;
-
+async function createMarkup(query, pageNumber = 1) {
+  try {
+    const data = await fetchPost(query, pageNumber, RES_PER_PAGE);
     if (!data.totalHits) {
-      loadMoreBtn.hide();
-      pageLoadStatus.errorShow();
-
-      return iziToast.show({
+      iziToast.show({
         message:
           'Sorry, there are no images matching your search query. Please try again.',
         position: 'topRight',
         color: '#FCE8E6',
       });
+      observer.disconnect();
+      return '';
     }
-
-    if (!data.hits.length) {
-      loadMoreBtn.hide();
-      pageLoadStatus.lastElemShow();
-      return;
-    }
-    renderPost(data.hits);
-    if (curentPage === 1) {
+    if (pageNumber === 1) {
       iziToast.show({
-        message: `Hooray! We found ${postApiService.hits} images.`,
+        message: `Hooray! We found ${data.totalHits} images.`,
         position: 'topRight',
         color: '#E6FCED',
       });
-      loadMoreBtn.show();
     }
-    pageLoadStatus.enable();
-  });
-}
-// Create markup posts
-function renderPost(data) {
-  let markupPost = data
-    .map(
-      ({
-        largeImageURL,
-        webformatURL,
-        tags,
-        likes,
-        views,
-        comments,
-        downloads,
-      }) => {
-        return `<a class="gallery__item" href="${largeImageURL}">
+    if (data.totalHits <= pageNumber * RES_PER_PAGE) {
+      observer.disconnect();
+      endPage.classList.remove('is-hidden');
+    }
+    return data.hits
+      .map(
+        ({
+          largeImageURL,
+          webformatURL,
+          tags,
+          likes,
+          views,
+          comments,
+          downloads,
+        }) => {
+          return `
+                <a class="gallery__item" href="${largeImageURL}">
                   <div class="photo-card">
                       <img src="${webformatURL}" alt="${tags}" loading="lazy" />
                       <div class="info">
@@ -117,35 +101,12 @@ function renderPost(data) {
                       </div>
                     </div>
                  </a>`;
-      }
-    )
-    .join('');
-
-  refs.gallery.insertAdjacentHTML('beforeend', markupPost);
-  lightbox.refresh();
-  // smoothScroll();
-}
-
-function clearGallery() {
-  refs.gallery.innerHTML = '';
-}
-
-function smoothScroll() {
-  const { height: cardHeight } = document
-    .querySelector('.gallery')
-    .firstElementChild.getBoundingClientRect();
-
-  window.scrollBy({
-    top: cardHeight * 2,
-    behavior: 'smooth',
-  });
-}
-
-async function onLoading(entries) {
-  await entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      console.log(entry.isIntersecting);
-      fetchPosts();
-    }
-  });
+        }
+      )
+      .join('');
+  } catch (err) {
+    console.dir(err);
+    iziToast.error({ message: err.message });
+    observer.disconnect();
+  }
 }
