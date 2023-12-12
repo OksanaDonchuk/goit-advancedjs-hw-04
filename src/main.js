@@ -56,7 +56,9 @@ async function observerAction(entries) {
 
 async function createMarkup(query, pageNumber = 1) {
   try {
+    endPage.classList.add('is-hidden');
     const data = await fetchPost(query, pageNumber, RES_PER_PAGE);
+
     if (!data.totalHits) {
       iziToast.show({
         message:
@@ -78,6 +80,7 @@ async function createMarkup(query, pageNumber = 1) {
       observer.disconnect();
       endPage.classList.remove('is-hidden');
     }
+
     return data.hits
       .map(
         ({
