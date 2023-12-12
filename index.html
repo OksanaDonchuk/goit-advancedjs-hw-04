@@ -2,57 +2,33 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Home work 4</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Arsenal&family=Raleway:wght@800&family=Roboto:wght@400;500;700;900&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/2.0.0/modern-normalize.min.css"
-      integrity="sha512-4xo8blKMVCiXpTaLzQSLSw3KFOVPWhm/TRtuPVc4WG6kUgjH6J03IBuG7JZPkcWMxJ5huwaBpOpnwYElP/m6wg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
     
+    <title>Homework 4</title>
     <script type="module" crossorigin src="/goit-advancedjs-hw-04/commonHelpers.js"></script>
     <link rel="modulepreload" crossorigin href="/goit-advancedjs-hw-04/assets/vendor-5f0e12e0.js">
     <link rel="stylesheet" href="/goit-advancedjs-hw-04/assets/vendor-fd638ea2.css">
-    <link rel="stylesheet" href="/goit-advancedjs-hw-04/assets/index-5f5ce444.css">
+    <link rel="stylesheet" href="/goit-advancedjs-hw-04/assets/index-49d18aaa.css">
   </head>
   <body>
     <form class="search-form" id="search-form">
       <input
+        class="search-input"
         type="text"
         name="searchQuery"
         autocomplete="off"
         placeholder="Search images..."
       />
-      <button type="submit" class="btn">Search</button>
+      <button class="btn" type="submit">Search</button>
     </form>
 
-    <div class="container gallery"></div>
+    <main class="main">
+      <div class="gallery"></div>
+      <div class="observer"></div>
+      <p class="end-page is-hidden">The End!</p>
+    </main>
 
-    <div class="page-load-status">
-      <div class="loader-ellips infinite-scroll-request is-hidden">
-        <span class="loader-ellips__dot"></span>
-        <span class="loader-ellips__dot"></span>
-        <span class="loader-ellips__dot"></span>
-        <span class="loader-ellips__dot"></span>
-      </div>
-      <p class="infinite-scroll-last is-hidden">The end</p>
-      <p class="infinite-scroll-error is-hidden">No more pages to load</p>
-    </div>
-
-    <button type="button" class="load-more btn btn-primary">
-      Load more
-      <div class="btn-loader">
-        <span class="spinner" role="status" aria-hidden="true"></span>
-      </div>
-    </button>
     
   </body>
 </html>
